@@ -8,6 +8,10 @@ const colors = { rose: "#ab6b61", sage: "#648060", clay: "#a2664f", sand: "#9679
 function dateKey(offset = 0) {
   const date = new Date();
   date.setDate(date.getDate() + offset);
+  return calendarKey(date);
+}
+
+function calendarKey(date) {
   return [date.getFullYear(), date.getMonth() + 1, date.getDate()]
     .map(part => String(part).padStart(2, "0")).join("-");
 }

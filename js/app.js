@@ -150,6 +150,13 @@ function render() {
   const visible = scoped.filter(task =>
     (!query || `${task.title} ${task.description}`.toLocaleLowerCase("ru").includes(query)) &&
     (!priority || task.priority === priority) && matchesDeadline(task, deadline, today));
+  board.hidden = plannerView !== "board";
+  byId("calendar").hidden = !board.hidden;
+  if (board.hidden) {
+    board.replaceChildren();
+    renderCalendar(visible, today);
+    return;
+  }
   board.replaceChildren();
   for (const [status, name] of Object.entries(statuses)) {
     const tasks = visible.filter(task => task.status === status);
@@ -211,7 +218,7 @@ function fillSelect(select, pairs) {
   select.replaceChildren(...pairs.map(([value, name]) => new Option(name, value)));
 }
 
-function openTask(task, status = "todo") {
+function openTask(task, status = "todo", due = "") {
   editingTaskId = task?.id ?? "";
   byId("task-dialog-title").textContent = task ? "Редактировать задачу" : "Новая задача";
   fillSelect(byId("task-project"), [["", "Без проекта"], ...state.projects.map(project => [project.id, project.name])]);
@@ -224,7 +231,7 @@ function openTask(task, status = "todo") {
   fields.projectId.value = task?.projectId ?? activeProject;
   fields.status.value = task?.status ?? status;
   fields.priority.value = task?.priority ?? "medium";
-  fields.due.value = task?.due ?? "";
+  fields.due.value = task?.due ?? due;
   byId("delete-task").hidden = !task;
   taskDialog.showModal();
 }
@@ -287,7 +294,7 @@ taskForm.addEventListener("submit", event => {
   else state.tasks[index] = task;
   taskDialog.close();
   update(index < 0 ? "Задача добавлена." : "Задача обновлена.", () =>
-    (taskControl(task.id, ".edit-task") ?? byId("new-task")).focus());
+    (taskControl(task.id, ".edit-task") ?? calendarTaskControl(task.id) ?? byId("new-task")).focus());
 });
 
 byId("delete-task").addEventListener("click", () => {
@@ -295,7 +302,7 @@ byId("delete-task").addEventListener("click", () => {
   confirmDeletion(`Удалить задачу «${task.title}»?`, () => {
     state.tasks = state.tasks.filter(item => item.id !== task.id);
     taskDialog.close();
-    update("Задача удалена.", () => byId("new-task").focus());
+    update("Задача удалена.", () => (calendarDayControl() ?? byId("new-task")).focus());
   });
 });
 
@@ -351,8 +358,9 @@ byId("delete-project").addEventListener("click", () => {
 byId("new-project").addEventListener("click", () => openProject(null));
 document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
-byId("new-task").addEventListener("click", () => openTask(null));
+byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
 
+initCalendar();
 notice(loaded.problem);
 persist();
 render();
