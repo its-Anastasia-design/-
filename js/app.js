@@ -4,6 +4,8 @@ const byId = id => document.getElementById(id);
 const loaded = loadState();
 const state = loaded.state;
 state.habits ??= [];
+let savedSnapshot = JSON.stringify(state);
+let undoSnapshot = null;
 const board = byId("board");
 const projectNav = byId("projects");
 const search = byId("search");
@@ -55,6 +57,12 @@ function announce(message) {
 }
 
 function persist() {
+  const nextSnapshot = JSON.stringify(state);
+  if (nextSnapshot !== savedSnapshot) {
+    undoSnapshot = savedSnapshot;
+    savedSnapshot = nextSnapshot;
+    byId("undo-change").disabled = false;
+  }
   if (loaded.problem) return;
   try {
     saveState(state);
@@ -392,6 +400,18 @@ byId("new-project").addEventListener("click", () => openProject(null));
 document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
+
+byId("undo-change").addEventListener("click", () => {
+  if (!undoSnapshot) return;
+  const restored = JSON.parse(undoSnapshot);
+  for (const key of Object.keys(state)) delete state[key];
+  Object.assign(state, restored);
+  savedSnapshot = undoSnapshot;
+  undoSnapshot = null;
+  byId("undo-change").disabled = true;
+  if (!state.projects.some(project => project.id === activeProject)) activeProject = "";
+  update("Последнее изменение отменено.");
+});
 
 initExtras();
 initCalendar();

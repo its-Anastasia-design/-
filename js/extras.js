@@ -1,6 +1,7 @@
 "use strict";
 
 let habitOffset = 0;
+let editingHabitId = "";
 const money = value => new Intl.NumberFormat("ru", { style: "currency", currency: "RUB" }).format(Number(value) || 0);
 
 function occurrenceDate(task, index) {
@@ -57,6 +58,13 @@ function materialize(task) {
 
 function taskChecklist(task) {
   const list = element("div", "checklist");
+  if (!task.subtasks?.length) return list;
+  const summary = element("p", "checklist-summary");
+  const refreshSummary = () => {
+    summary.textContent = `Шаги: ${task.subtasks.filter(step => step.done).length} из ${task.subtasks.length}`;
+  };
+  refreshSummary();
+  list.append(summary);
   for (const [index, step] of (task.subtasks ?? []).entries()) {
     const label = element("label", "check-item");
     const checkbox = element("input");
@@ -66,6 +74,8 @@ function taskChecklist(task) {
     checkbox.addEventListener("change", () => {
       const saved = task.virtual ? materialize(task) : task;
       saved.subtasks[index].done = checkbox.checked;
+      step.done = checkbox.checked;
+      refreshSummary();
       persist();
       announce(step.done ? "Подзадача выполнена." : "Отметка снята.");
     });
@@ -88,6 +98,17 @@ function syncTaskKind(defaultRepeat) {
 }
 
 function initExtras() {
+  byId("habit-edit-form").addEventListener("submit", event => {
+    event.preventDefault();
+    const input = event.target.elements.title;
+    if (!validateName(input)) return;
+    const habit = state.habits.find(item => item.id === editingHabitId);
+    if (!habit) return;
+    habit.title = input.value.trim();
+    byId("habit-dialog").close();
+    update("Название привычки обновлено.");
+  });
+  byId("habit-edit-form").elements.title.addEventListener("input", event => event.target.setCustomValidity(""));
   taskForm.elements.kind.addEventListener("change", () => syncTaskKind(true));
   taskForm.elements.repeat.addEventListener("change", () => syncTaskKind(false));
   byId("habit-form").addEventListener("submit", event => {
@@ -116,7 +137,13 @@ function renderHabits() {
   for (const habit of state.habits) {
     const row = element("article", "habit-row");
     const head = element("div", "agenda-header");
-    head.append(element("h3", "", habit.title), icon("×", "Удалить привычку «" + habit.title + "»", () =>
+    head.append(element("h3", "", habit.title), icon("✎", "Изменить привычку «" + habit.title + "»", () => {
+      editingHabitId = habit.id;
+      const input = byId("habit-edit-form").elements.title;
+      input.value = habit.title;
+      input.setCustomValidity("");
+      byId("habit-dialog").showModal();
+    }), icon("×", "Удалить привычку «" + habit.title + "»", () =>
       confirmDeletion("Удалить привычку и все её отметки?", () => {
         state.habits = state.habits.filter(item => item.id !== habit.id);
         update("Привычка удалена.");

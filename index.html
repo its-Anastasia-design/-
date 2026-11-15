@@ -37,6 +37,7 @@
       <label>Срок<select id="deadline-filter"><option value="">Любой</option><option value="overdue">Просрочен</option><option value="today">Сегодня</option><option value="upcoming">После сегодня</option><option value="none">Без срока</option></select></label>
       <button id="reset-filters" class="secondary" type="button" hidden>Сбросить</button>
     </section>
+    <div class="undo-bar"><button id="undo-change" class="secondary" type="button" disabled>Отменить последнее изменение</button><span>В текущем сеансе</span></div>
     <p id="storage-error" class="notice" role="alert" hidden></p>
     <p id="announcement" class="sr-only" role="status"></p>
     <section class="board" id="board" aria-label="Канбан-доска"></section>
@@ -87,6 +88,13 @@
         <button class="secondary" type="button" data-close>Отмена</button>
         <button class="primary" type="submit">Сохранить</button>
       </div>
+    </form>
+  </dialog>
+  <dialog id="habit-dialog" aria-labelledby="habit-dialog-title">
+    <h2 id="habit-dialog-title">Изменить привычку</h2>
+    <form id="habit-edit-form">
+      <label>Название<input name="title" required maxlength="80" autofocus></label>
+      <div class="actions"><button class="secondary" type="button" data-close>Отмена</button><button class="primary" type="submit">Сохранить</button></div>
     </form>
   </dialog>
   <dialog id="project-dialog" aria-labelledby="project-dialog-title">

@@ -195,3 +195,8 @@ dialog textarea { resize: vertical; min-height: 82px; }
 .habit-row h3 { margin: 0; overflow-wrap: anywhere; }
 .habit-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .habit-day { align-items: center; justify-items: center; padding: 8px 0; font-size: 12px; }
+
+.undo-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
+.undo-bar span, .checklist-summary { color: var(--muted); font-size: 12px; }
+button:disabled { opacity: .5; cursor: default; }
+.habit-row .agenda-header h3 { flex: 1; }
