@@ -142,9 +142,17 @@ function render() {
   progress.value = done;
 
   const today = dateKey();
+  const query = search.value.trim().toLocaleLowerCase("ru");
+  const priority = priorityFilter.value;
+  const deadline = deadlineFilter.value;
+  const filtering = Boolean(query || priority || deadline);
+  resetFilters.hidden = !filtering;
+  const visible = scoped.filter(task =>
+    (!query || `${task.title} ${task.description}`.toLocaleLowerCase("ru").includes(query)) &&
+    (!priority || task.priority === priority) && matchesDeadline(task, deadline, today));
   board.replaceChildren();
   for (const [status, name] of Object.entries(statuses)) {
-    const tasks = scoped.filter(task => task.status === status);
+    const tasks = visible.filter(task => task.status === status);
     const column = element("section", "column");
     column.dataset.status = status;
     column.addEventListener("dragover", event => {
@@ -172,11 +180,32 @@ function render() {
       icon("+", `Добавить задачу в «${name}»`, () => openTask(null, status)));
     const cards = element("div", "cards");
     cards.append(...tasks.map(task => renderTask(task, today)));
-    if (!tasks.length) cards.append(element("p", "empty", "Пока нет задач"));
+    if (!tasks.length) cards.append(element("p", "empty", filtering ? "Нет подходящих задач" : "Пока нет задач"));
     column.append(header, cards);
     board.append(column);
   }
 }
+
+function matchesDeadline(task, filter, today) {
+  switch (filter) {
+    case "overdue": return !!task.due && task.status !== "done" && task.due < today;
+    case "today": return task.due === today;
+    case "upcoming": return task.due > today;
+    case "none": return !task.due;
+    default: return true;
+  }
+}
+
+search.addEventListener("input", render);
+priorityFilter.addEventListener("change", render);
+deadlineFilter.addEventListener("change", render);
+resetFilters.addEventListener("click", () => {
+  search.value = "";
+  priorityFilter.value = "";
+  deadlineFilter.value = "";
+  render();
+  search.focus();
+});
 
 function fillSelect(select, pairs) {
   select.replaceChildren(...pairs.map(([value, name]) => new Option(name, value)));
