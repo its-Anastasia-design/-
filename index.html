@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/style.css">
   <script defer src="js/data.js"></script>
   <script defer src="js/calendar.js"></script>
+  <script defer src="js/extras.js"></script>
   <script defer src="js/app.js"></script>
 </head>
 <body>
@@ -28,6 +29,7 @@
       <button class="secondary" type="button" data-view="board" aria-pressed="true">Доска</button>
       <button class="secondary" type="button" data-view="week" aria-pressed="false">Неделя</button>
       <button class="secondary" type="button" data-view="month" aria-pressed="false">Месяц</button>
+      <button class="secondary" type="button" data-view="habits" aria-pressed="false">Привычки</button>
     </nav>
     <section aria-label="Фильтры задач" class="toolbar">
       <label class="search"><span>Поиск</span><input id="search" type="search" placeholder="Название или описание"></label>
@@ -47,12 +49,19 @@
           <button class="icon" id="calendar-next" type="button">›</button>
         </div>
       </header>
+      <p id="subscription-summary" class="notice" hidden></p>
       <div id="calendar-grid"></div>
       <section class="calendar-agenda" id="calendar-agenda" aria-labelledby="agenda-title"></section>
       <section class="calendar-undated" aria-labelledby="undated-title">
         <h3 id="undated-title">Без срока</h3>
         <div id="calendar-undated"></div>
       </section>
+    </section>
+    <section id="habits" hidden aria-label="Трекер привычек">
+      <h2>Привычки</h2>
+      <form id="habit-form"><label>Новая ежедневная привычка<input name="title" required maxlength="80" placeholder="Например, прогулка 20 минут"></label><button class="primary">Добавить</button></form>
+      <div class="calendar-nav"><button id="habit-prev" class="secondary">← Неделя</button><button id="habit-today" class="secondary">Сегодня</button><button id="habit-next" class="secondary">Неделя →</button></div>
+      <p id="habit-period"></p><div id="habit-list"></div>
     </section>
   </main>
   <dialog id="task-dialog" aria-labelledby="task-dialog-title">
@@ -66,6 +75,13 @@
         <label>Приоритет<select name="priority" id="task-priority"></select></label>
         <label>Срок<input type="date" name="due" max="9999-12-31"></label>
       </div>
+      <div class="fields">
+        <label>Тип<select name="kind"><option value="task">Задача</option><option value="birthday">День рождения</option><option value="subscription">Оплата подписки</option></select></label>
+        <label>Повтор<select name="repeat"><option value="">Без повтора</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option><option value="yearly">Ежегодно</option></select></label>
+        <label id="amount-field" hidden>Сумма, ₽<input name="amount" type="number" min="0" max="100000000" step="0.01"></label>
+      </div>
+      <p id="repeat-help" class="form-help">Повтор создаёт даты в календаре. Отдельное повторение можно перенести или отметить выполненным.</p>
+      <label>Подзадачи — каждая с новой строки<textarea name="steps" maxlength="3000" placeholder="Собрать референсы&#10;Сделать эскиз"></textarea></label>
       <div class="actions">
         <button class="danger" id="delete-task" type="button">Удалить</button>
         <button class="secondary" type="button" data-close>Отмена</button>

@@ -8,6 +8,7 @@ let plannerView = "board";
 let calendarDate = dateKey();
 let calendarDragId = "";
 let calendarDropTime = 0;
+let displayedCalendarTasks = [];
 
 function asDate(key) {
   return new Date(`${key}T12:00:00`);
@@ -71,10 +72,10 @@ function calendarTask(task, today, compact) {
   button.dataset.status = task.status;
   const project = state.projects.find(item => item.id === task.projectId);
   const overdue = task.due && task.due < today && task.status !== "done";
-  const details = [project?.name, statuses[task.status], priorities[task.priority], overdue ? "Просрочено" : ""].filter(Boolean);
+  const details = [task.kind === "birthday" ? "День рождения" : task.kind === "subscription" ? "Подписка · " + money(task.amount) : "", project?.name, statuses[task.status], priorities[task.priority], overdue ? "Просрочено" : ""].filter(Boolean);
   button.title = [task.title, ...details].join(" · ");
   button.setAttribute("aria-label", button.title);
-  button.append(dot(colors[project?.color] ?? colors.sand), element("span", "calendar-task-title", task.title));
+  button.append(dot(colors[project?.color] ?? colors.sand), element("span", "calendar-task-title", (task.kind === "birthday" ? "🎂 " : task.kind === "subscription" ? "₽ " : "") + task.title));
   if (!compact) button.append(element("span", "calendar-task-meta", details.join(" · ")));
   button.draggable = true;
   button.addEventListener("dragstart", event => {
@@ -99,7 +100,8 @@ function clearCalendarDrag() {
 function dropCalendarTask(event, key) {
   if (!calendarDragId) return;
   event.preventDefault();
-  const task = state.tasks.find(item => item.id === calendarDragId);
+  const source = displayedCalendarTasks.find(item => item.id === calendarDragId);
+  const task = source?.virtual ? materialize(source) : source;
   clearCalendarDrag();
   calendarDropTime = Date.now();
   if (!task || task.due === key) return;
@@ -123,6 +125,11 @@ function renderCalendar(tasks, today) {
   const period = isMonth ? "месяц" : "неделя";
   byId("calendar-prev").setAttribute("aria-label", `Назад (${period})`);
   byId("calendar-next").setAttribute("aria-label", `Вперёд (${period})`);
+  tasks = calendarOccurrences(tasks, start, end).filter(task => matchesDeadline(task, deadlineFilter.value, today));
+  displayedCalendarTasks = tasks;
+  const subscriptions = tasks.filter(task => task.kind === "subscription" && task.due >= calendarKey(start) && task.due <= calendarKey(end) && task.status !== "done");
+  byId("subscription-summary").textContent = subscriptions.length ? `Оплаты за этот период: ${money(subscriptions.reduce((sum, task) => sum + (Number(task.amount) || 0), 0))}. Отметьте оплату как «Готово» после списания.` : "";
+  byId("subscription-summary").hidden = !subscriptions.length;
   const byDate = new Map();
   for (const task of tasks) {
     if (!byDate.has(task.due)) byDate.set(task.due, []);
@@ -152,7 +159,12 @@ function renderCalendar(tasks, today) {
 }
 
 function calendarList(tasks, today, emptyText) {
-  return tasks.length ? tasks.map(task => calendarTask(task, today, false)) :
+  return tasks.length ? tasks.map(task => {
+    const row = element("div");
+    row.append(calendarTask(task, today, false));
+    if (task.subtasks?.length) row.append(taskChecklist(task));
+    return row;
+  }) :
     [element("p", "empty", emptyText)];
 }
 

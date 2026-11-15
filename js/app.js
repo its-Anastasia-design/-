@@ -3,6 +3,7 @@
 const byId = id => document.getElementById(id);
 const loaded = loadState();
 const state = loaded.state;
+state.habits ??= [];
 const board = byId("board");
 const projectNav = byId("projects");
 const search = byId("search");
@@ -69,7 +70,7 @@ function renderProjects() {
   for (const project of [all, ...state.projects]) {
     const row = element("div", "project-row");
     const button = element("button", "project-button");
-    const count = project.id ? state.tasks.filter(task => task.projectId === project.id).length : state.tasks.length;
+    const count = state.tasks.filter(task => !task.deleted && (!project.id || task.projectId === project.id)).length;
     button.type = "button";
     button.dataset.project = project.id;
     button.setAttribute("aria-current", String(activeProject === project.id));
@@ -126,14 +127,24 @@ function renderTask(task, today) {
   status.addEventListener("change", () => moveTask(task.id, status.value));
   statusLabel.append(status);
   card.append(meta, statusLabel);
+  card.append(taskChecklist(task));
+  if (task.kind === "subscription") card.append(element("p", "", money(task.amount)));
   return card;
 }
 
 function render() {
-  document.body.classList.toggle("calendar-view", plannerView !== "board");
+  byId("habits").hidden = plannerView !== "habits";
+  document.querySelector(".toolbar").hidden = plannerView === "habits";
+  byId("new-task").hidden = plannerView === "habits";
+  if (plannerView === "habits") {
+    board.hidden = true;
+    byId("calendar").hidden = true;
+    renderHabits();
+    return;
+  }
   renderProjects();
   const project = state.projects.find(item => item.id === activeProject);
-  const scoped = project ? state.tasks.filter(task => task.projectId === project.id) : state.tasks;
+  const scoped = state.tasks.filter(task => !task.deleted && (!project || task.projectId === project.id));
   byId("board-title").textContent = project?.name ?? "Доска задач";
   const done = scoped.filter(task => task.status === "done").length;
   byId("progress-text").textContent = scoped.length ? `Готово ${done} из ${scoped.length}` : "Здесь пока нет задач";
@@ -150,7 +161,7 @@ function render() {
   resetFilters.hidden = !filtering;
   const visible = scoped.filter(task =>
     (!query || `${task.title} ${task.description}`.toLocaleLowerCase("ru").includes(query)) &&
-    (!priority || task.priority === priority) && matchesDeadline(task, deadline, today));
+    (!priority || task.priority === priority) && (plannerView !== "board" || matchesDeadline(task, deadline, today)));
   board.hidden = plannerView !== "board";
   byId("calendar").hidden = !board.hidden;
   if (board.hidden) {
@@ -220,6 +231,7 @@ function fillSelect(select, pairs) {
 }
 
 function openTask(task, status = "todo", due = "") {
+  if (task?.virtual) task = materialize(task);
   editingTaskId = task?.id ?? "";
   byId("task-dialog-title").textContent = task ? "Редактировать задачу" : "Новая задача";
   fillSelect(byId("task-project"), [["", "Без проекта"], ...state.projects.map(project => [project.id, project.name])]);
@@ -233,6 +245,13 @@ function openTask(task, status = "todo", due = "") {
   fields.status.value = task?.status ?? status;
   fields.priority.value = task?.priority ?? "medium";
   fields.due.value = task?.due ?? due;
+  fields.kind.value = task?.kind ?? "task";
+  fields.repeat.value = task?.repeat ?? "";
+  fields.repeat.disabled = !!task?.seriesId;
+  fields.amount.value = task?.amount ?? "";
+  fields.steps.value = (task?.subtasks ?? []).map(step => step.title).join("\n");
+  byId("repeat-help").textContent = task?.seriesId ? "Изменения относятся только к этому повторению. Для настройки серии откройте исходную задачу." : "Изменения исходной задачи применяются к будущим повторениям. Для повтора укажите первую дату.";
+  syncTaskKind(false);
   byId("delete-task").hidden = !task;
   taskDialog.showModal();
 }
@@ -286,8 +305,17 @@ taskForm.addEventListener("submit", event => {
   event.preventDefault();
   if (!validateName(taskForm.elements.title)) return;
   const values = Object.fromEntries(new FormData(taskForm));
+  if (values.repeat && !values.due) {
+    taskForm.elements.due.required = true;
+    taskForm.elements.due.reportValidity();
+    return;
+  }
+  const previous = state.tasks.find(item => item.id === editingTaskId);
   const task = {
-    ...values, id: editingTaskId || newId(),
+    ...previous, ...values, id: editingTaskId || newId(),
+    subtasks: values.steps.split("\n").map(title => title.trim()).filter(Boolean).map((title, index) => ({
+      title, done: previous?.subtasks?.[index]?.title === title && previous.subtasks[index].done || false,
+    })),
     title: values.title.trim(), description: values.description.trim(),
   };
   const index = state.tasks.findIndex(item => item.id === editingTaskId);
@@ -300,8 +328,12 @@ taskForm.addEventListener("submit", event => {
 
 byId("delete-task").addEventListener("click", () => {
   const task = state.tasks.find(item => item.id === editingTaskId);
-  confirmDeletion(`Удалить задачу «${task.title}»?`, () => {
-    state.tasks = state.tasks.filter(item => item.id !== task.id);
+  confirmDeletion(`Удалить задачу «${task.title}»?${task.repeat ? " Будущие повторения серии также будут удалены." : ""}`, () => {
+    if (task.seriesId) {
+      task.deleted = true;
+    } else {
+      state.tasks = state.tasks.filter(item => item.id !== task.id && item.seriesId !== task.id);
+    }
     taskDialog.close();
     update("Задача удалена.", () => (calendarDayControl() ?? byId("new-task")).focus());
   });
@@ -361,6 +393,7 @@ document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
 
+initExtras();
 initCalendar();
 notice(loaded.problem);
 persist();
