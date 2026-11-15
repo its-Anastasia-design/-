@@ -14,7 +14,10 @@ let draggingTask = "";
 const taskDialog = byId("task-dialog");
 const taskForm = byId("task-form");
 const confirmDialog = byId("confirm-dialog");
+const projectDialog = byId("project-dialog");
+const projectForm = byId("project-form");
 let editingTaskId = "";
+let editingProjectId = "";
 let confirmedAction;
 
 function element(tag, className, text) {
@@ -77,6 +80,7 @@ function renderProjects() {
       focusProject(activeProject);
     });
     row.append(button);
+    if (project.id) row.append(icon("⋯", `Редактировать проект «${project.name}»`, () => openProject(project)));
     projectNav.append(row);
   }
 }
@@ -266,6 +270,56 @@ byId("delete-task").addEventListener("click", () => {
   });
 });
 
+function openProject(project) {
+  editingProjectId = project?.id ?? "";
+  byId("project-dialog-title").textContent = project ? "Редактировать проект" : "Новый проект";
+  const name = projectForm.elements.namedItem("name");
+  name.setCustomValidity("");
+  name.value = project?.name ?? "";
+  projectForm.elements.color.value = project?.color ?? "rose";
+  byId("delete-project").hidden = !project;
+  projectDialog.showModal();
+}
+
+const projectName = projectForm.elements.namedItem("name");
+projectName.addEventListener("input", event => event.target.setCustomValidity(""));
+projectForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!validateName(projectName)) return;
+  const name = projectName.value.trim();
+  const duplicate = state.projects.some(project =>
+    project.id !== editingProjectId && project.name.toLocaleLowerCase("ru") === name.toLocaleLowerCase("ru"));
+  if (duplicate) {
+    projectName.setCustomValidity("Проект с таким названием уже есть.");
+    projectName.reportValidity();
+    return;
+  }
+  const color = projectForm.elements.color.value;
+  const existing = state.projects.find(project => project.id === editingProjectId);
+  const project = existing ?? { id: newId() };
+  Object.assign(project, { name, color });
+  if (!existing) {
+    state.projects.push(project);
+    activeProject = project.id;
+  }
+  projectDialog.close();
+  update(existing ? "Проект обновлён." : "Проект добавлен.", () => focusProject(project.id));
+});
+
+byId("delete-project").addEventListener("click", () => {
+  const project = state.projects.find(item => item.id === editingProjectId);
+  confirmDeletion(`Удалить проект «${project.name}»? Его задачи останутся на доске с пометкой «Без проекта».`, () => {
+    state.projects = state.projects.filter(item => item.id !== project.id);
+    for (const task of state.tasks) {
+      if (task.projectId === project.id) task.projectId = "";
+    }
+    if (activeProject === project.id) activeProject = "";
+    projectDialog.close();
+    update("Проект удалён.", () => focusProject(activeProject));
+  });
+});
+
+byId("new-project").addEventListener("click", () => openProject(null));
 document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null));

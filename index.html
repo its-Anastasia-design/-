@@ -51,6 +51,23 @@
       </div>
     </form>
   </dialog>
+  <dialog id="project-dialog" aria-labelledby="project-dialog-title">
+    <h2 id="project-dialog-title">Новый проект</h2>
+    <form id="project-form">
+      <label>Название<input name="name" maxlength="60" required autofocus></label>
+      <label>Цвет<select name="color">
+        <option value="rose">Пыльная роза</option>
+        <option value="sage">Шалфей</option>
+        <option value="clay">Терракота</option>
+        <option value="sand">Песочный</option>
+      </select></label>
+      <div class="actions">
+        <button class="danger" id="delete-project" type="button">Удалить</button>
+        <button class="secondary" type="button" data-close>Отмена</button>
+        <button class="primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
     <h2 id="confirm-title">Подтвердить удаление</h2>
     <p id="confirm-text"></p>
