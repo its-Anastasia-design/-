@@ -33,5 +33,33 @@
     <p id="announcement" class="sr-only" role="status"></p>
     <section class="board" id="board" aria-label="Канбан-доска"></section>
   </main>
+  <dialog id="task-dialog" aria-labelledby="task-dialog-title">
+    <h2 id="task-dialog-title">Новая задача</h2>
+    <form id="task-form">
+      <label>Название<input name="title" maxlength="100" required autofocus></label>
+      <label>Описание<textarea name="description" maxlength="1000" rows="3"></textarea></label>
+      <div class="fields">
+        <label>Проект<select name="projectId" id="task-project"></select></label>
+        <label>Статус<select name="status" id="task-status"></select></label>
+        <label>Приоритет<select name="priority" id="task-priority"></select></label>
+        <label>Срок<input type="date" name="due" max="9999-12-31"></label>
+      </div>
+      <div class="actions">
+        <button class="danger" id="delete-task" type="button">Удалить</button>
+        <button class="secondary" type="button" data-close>Отмена</button>
+        <button class="primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
+  <dialog id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <h2 id="confirm-title">Подтвердить удаление</h2>
+    <p id="confirm-text"></p>
+    <form method="dialog">
+      <div class="actions">
+        <button class="secondary" value="cancel" autofocus>Отмена</button>
+        <button class="danger" value="delete">Удалить</button>
+      </div>
+    </form>
+  </dialog>
 </body>
 </html>

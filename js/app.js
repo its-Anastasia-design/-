@@ -10,7 +10,11 @@ const priorityFilter = byId("priority-filter");
 const deadlineFilter = byId("deadline-filter");
 const resetFilters = byId("reset-filters");
 let activeProject = "";
-let draggingTask = "";
+const taskDialog = byId("task-dialog");
+const taskForm = byId("task-form");
+const confirmDialog = byId("confirm-dialog");
+let editingTaskId = "";
+let confirmedAction;
 
 function element(tag, className, text) {
   const node = document.createElement(tag);
@@ -86,6 +90,9 @@ function renderTask(task, today) {
   const top = element("div", "card-top");
   const project = state.projects.find(item => item.id === task.projectId);
   top.append(element("span", "badge", project?.name ?? "Без проекта"));
+  const edit = icon("✎", `Редактировать задачу «${task.title}»`, () => openTask(task));
+  edit.classList.add("edit-task");
+  top.append(edit);
   card.append(top, element("h3", "", task.title));
   if (task.description) card.append(element("p", "", task.description));
   const meta = element("div", "card-meta");
@@ -125,7 +132,8 @@ function render() {
     column.setAttribute("aria-labelledby", heading.id);
     const header = element("div", "column-head");
     const statusColor = { todo: colors.sand, doing: colors.rose, done: colors.sage };
-    header.append(dot(statusColor[status]), heading, element("span", "count", tasks.length));
+    header.append(dot(statusColor[status]), heading, element("span", "count", tasks.length),
+      icon("+", `Добавить задачу в «${name}»`, () => openTask(null, status)));
     const cards = element("div", "cards");
     cards.append(...tasks.map(task => renderTask(task, today)));
     if (!tasks.length) cards.append(element("p", "empty", "Пока нет задач"));
@@ -133,6 +141,88 @@ function render() {
     board.append(column);
   }
 }
+
+function fillSelect(select, pairs) {
+  select.replaceChildren(...pairs.map(([value, name]) => new Option(name, value)));
+}
+
+function openTask(task, status = "todo") {
+  editingTaskId = task?.id ?? "";
+  byId("task-dialog-title").textContent = task ? "Редактировать задачу" : "Новая задача";
+  fillSelect(byId("task-project"), [["", "Без проекта"], ...state.projects.map(project => [project.id, project.name])]);
+  fillSelect(byId("task-status"), Object.entries(statuses));
+  fillSelect(byId("task-priority"), Object.entries(priorities));
+  const fields = taskForm.elements;
+  fields.title.setCustomValidity("");
+  fields.title.value = task?.title ?? "";
+  fields.description.value = task?.description ?? "";
+  fields.projectId.value = task?.projectId ?? activeProject;
+  fields.status.value = task?.status ?? status;
+  fields.priority.value = task?.priority ?? "medium";
+  fields.due.value = task?.due ?? "";
+  byId("delete-task").hidden = !task;
+  taskDialog.showModal();
+}
+
+function taskControl(id, selector) {
+  return [...board.querySelectorAll(".card")].find(card => card.dataset.task === id)?.querySelector(selector);
+}
+
+function update(message, focus) {
+  persist();
+  render();
+  announce(message);
+  focus?.();
+}
+
+function confirmDeletion(message, action) {
+  byId("confirm-text").textContent = message;
+  confirmedAction = action;
+  confirmDialog.returnValue = "";
+  confirmDialog.showModal();
+}
+
+confirmDialog.addEventListener("close", () => {
+  if (confirmDialog.returnValue === "delete") confirmedAction?.();
+  confirmedAction = undefined;
+});
+
+function validateName(input) {
+  if (input.value.trim()) return true;
+  input.setCustomValidity("Введите название.");
+  input.reportValidity();
+  return false;
+}
+
+taskForm.elements.title.addEventListener("input", event => event.target.setCustomValidity(""));
+taskForm.addEventListener("submit", event => {
+  event.preventDefault();
+  if (!validateName(taskForm.elements.title)) return;
+  const values = Object.fromEntries(new FormData(taskForm));
+  const task = {
+    ...values, id: editingTaskId || newId(),
+    title: values.title.trim(), description: values.description.trim(),
+  };
+  const index = state.tasks.findIndex(item => item.id === editingTaskId);
+  if (index < 0) state.tasks.push(task);
+  else state.tasks[index] = task;
+  taskDialog.close();
+  update(index < 0 ? "Задача добавлена." : "Задача обновлена.", () =>
+    (taskControl(task.id, ".edit-task") ?? byId("new-task")).focus());
+});
+
+byId("delete-task").addEventListener("click", () => {
+  const task = state.tasks.find(item => item.id === editingTaskId);
+  confirmDeletion(`Удалить задачу «${task.title}»?`, () => {
+    state.tasks = state.tasks.filter(item => item.id !== task.id);
+    taskDialog.close();
+    update("Задача удалена.", () => byId("new-task").focus());
+  });
+});
+
+document.querySelectorAll("[data-close]").forEach(button =>
+  button.addEventListener("click", () => button.closest("dialog").close()));
+byId("new-task").addEventListener("click", () => openTask(null));
 
 notice(loaded.problem);
 persist();
