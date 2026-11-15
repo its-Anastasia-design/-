@@ -3,9 +3,6 @@
 const byId = id => document.getElementById(id);
 const loaded = loadState();
 const state = loaded.state;
-state.habits ??= [];
-let savedSnapshot = JSON.stringify(state);
-let undoSnapshot = null;
 const board = byId("board");
 const projectNav = byId("projects");
 const search = byId("search");
@@ -57,12 +54,6 @@ function announce(message) {
 }
 
 function persist() {
-  const nextSnapshot = JSON.stringify(state);
-  if (nextSnapshot !== savedSnapshot) {
-    undoSnapshot = savedSnapshot;
-    savedSnapshot = nextSnapshot;
-    byId("undo-change").disabled = false;
-  }
   if (loaded.problem) return;
   try {
     saveState(state);
@@ -155,34 +146,13 @@ function render() {
   document.querySelector(".hero").hidden = home;
   renderProjects();
   if (home) {
-    for (const id of ["board", "calendar", "habits", "week-review"]) byId(id).hidden = true;
+    for (const id of ["board", "calendar"]) byId(id).hidden = true;
     document.querySelector(".toolbar").hidden = true;
     renderHome();
     return;
   }
-  const review = plannerView === "review";
-  byId("week-review").hidden = !review;
-  if (review) {
-    board.hidden = true;
-    byId("calendar").hidden = true;
-    byId("habits").hidden = true;
-    document.querySelector(".toolbar").hidden = true;
-    byId("new-task").hidden = true;
-    byId("board-title").textContent = "Моя неделя";
-    byId("progress-text").textContent = "Что получилось и что ещё впереди";
-    byId("progress").hidden = true;
-    renderReview();
-    return;
-  }
-  byId("habits").hidden = plannerView !== "habits";
-  document.querySelector(".toolbar").hidden = plannerView === "habits";
-  byId("new-task").hidden = plannerView === "habits";
-  if (plannerView === "habits") {
-    board.hidden = true;
-    byId("calendar").hidden = true;
-    renderHabits();
-    return;
-  }
+  document.querySelector(".toolbar").hidden = false;
+  byId("new-task").hidden = false;
   renderProjects();
   const project = state.projects.find(item => item.id === activeProject);
   const scoped = state.tasks.filter(task => !task.deleted && (!project || task.projectId === project.id));
@@ -440,18 +410,6 @@ byId("new-project").addEventListener("click", () => openProject(null));
 document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
-
-byId("undo-change").addEventListener("click", () => {
-  if (!undoSnapshot) return;
-  const restored = JSON.parse(undoSnapshot);
-  for (const key of Object.keys(state)) delete state[key];
-  Object.assign(state, restored);
-  savedSnapshot = undoSnapshot;
-  undoSnapshot = null;
-  byId("undo-change").disabled = true;
-  if (!state.projects.some(project => project.id === activeProject)) activeProject = "";
-  update("Последнее изменение отменено.");
-});
 
 initPlanning();
 initExtras();

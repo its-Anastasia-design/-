@@ -186,24 +186,14 @@ dialog textarea { resize: vertical; min-height: 82px; }
 
 .checklist { display: grid; gap: 6px; margin-top: 10px; }
 .check-item { display: flex; align-items: start; gap: 8px; line-height: 1.5; }
-.check-item input, .habit-day input { width: 20px; height: 20px; min-height: 20px; accent-color: #648060; flex-shrink: 0; }
+.check-item input { width: 20px; height: 20px; min-height: 20px; accent-color: #648060; flex-shrink: 0; }
 .check-item input:checked + span { text-decoration: line-through; color: var(--muted); }
 .form-help { font-size: 12px; color: var(--muted); margin: 0; }
-#habit-form { display: flex; align-items: end; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
-#habit-form label { flex: 1; }
-.habit-row { padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; margin-bottom: 12px; }
-.habit-row h3 { margin: 0; overflow-wrap: anywhere; }
-.habit-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
-.habit-day { align-items: center; justify-items: center; padding: 8px 0; font-size: 12px; }
 
-.undo-bar { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin: 14px 0; }
-.undo-bar span, .checklist-summary { color: var(--muted); font-size: 12px; }
+.checklist-summary { color: var(--muted); font-size: 12px; }
 button:disabled { opacity: .5; cursor: default; }
-.habit-row .agenda-header h3 { flex: 1; }
 .reminder-settings { margin: 12px 0; color: var(--muted); font-size: 13px; }
 .reminder-settings p { max-width: 650px; line-height: 1.5; }
-.review-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
-.review-row > p { font-size: 13px; color: var(--muted); margin: 4px 0; }
 .sidebar .views { display: grid; gap: 5px; margin: 0 0 30px; }
 .sidebar .views button { text-align: left; background: transparent; border-color: transparent; }
 .sidebar .views button[aria-pressed="true"] { background: var(--rose); }
@@ -219,11 +209,10 @@ button:disabled { opacity: .5; cursor: default; }
 .home-category.rose { background: #dfb7af; }
 .home-category.sage { background: #ccd8c4; }
 .home-layout { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(245px, 1fr); gap: 24px; margin-top: 26px; align-items: start; }
-.home-stats { display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; }
+.home-stats { display: grid; grid-template-columns: 1fr; gap: 16px; }
 .home-panel { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 20px; min-width: 0; }
 .home-panel h2, .home-section-title { font-size: 17px; margin: 0 0 20px; }
 .home-section-title { margin-top: 26px; }
-.home-number { display: block; font: 44px Georgia, serif; margin: 20px 0; }
 .home-bars { display: flex; justify-content: space-between; align-items: end; height: 130px; gap: 6px; }
 .home-bar { display: grid; gap: 7px; justify-items: center; font-size: 12px; color: var(--muted); flex: 1; }
 .home-bar-fill { width: 100%; max-width: 23px; border-radius: 6px; background: #c6d2bb; }

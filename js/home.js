@@ -38,12 +38,6 @@ function renderHome() {
   const layout = element("div", "home-layout");
   const left = element("div");
   const stats = element("div", "home-stats");
-  const habits = element("article", "home-panel");
-  const habitCount = state.habits.filter(habit => habit.days[today]).length;
-  habits.append(element("h2", "", "Привычки сегодня"), element("strong", "home-number", `${habitCount} / ${state.habits.length}`));
-  const showHabits = element("button", "secondary", "Отметить привычки");
-  showHabits.addEventListener("click", () => navigateHome("habits"));
-  habits.append(showHabits);
   const activity = element("article", "home-panel");
   activity.append(element("h2", "", "Планы на неделю"));
   const bars = element("div", "home-bars");
@@ -58,7 +52,7 @@ function renderHome() {
     bars.append(item);
   }
   activity.append(bars);
-  stats.append(habits, activity);
+  stats.append(activity);
   left.append(stats, element("h2", "home-section-title", "Дела на сегодня"));
   const todays = tasks.filter(task => task.due === today).sort((a, b) => (a.time || "99").localeCompare(b.time || "99"));
   if (!todays.length) left.append(element("p", "empty", "На сегодня пока нет задач. Можно оставить время для себя."));

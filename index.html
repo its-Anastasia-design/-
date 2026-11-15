@@ -23,8 +23,6 @@
       <button class="secondary" type="button" data-view="board" aria-pressed="false">Доска</button>
       <button class="secondary" type="button" data-view="week" aria-pressed="false">Неделя</button>
       <button class="secondary" type="button" data-view="month" aria-pressed="false">Месяц</button>
-      <button class="secondary" type="button" data-view="habits" aria-pressed="false">Привычки</button>
-      <button class="secondary" type="button" data-view="review" aria-pressed="false">Обзор недели</button>
     </nav>
     <div class="project-heading"><h2>Проекты</h2><button class="icon" id="new-project" type="button" aria-label="Добавить проект" title="Добавить проект">+</button></div>
     <nav id="projects" aria-label="Выбор проекта"></nav>
@@ -43,7 +41,6 @@
       <label>Срок<select id="deadline-filter"><option value="">Любой</option><option value="overdue">Просрочен</option><option value="today">Сегодня</option><option value="upcoming">После сегодня</option><option value="none">Без срока</option></select></label>
       <button id="reset-filters" class="secondary" type="button" hidden>Сбросить</button>
     </section>
-    <div class="undo-bar"><button id="undo-change" class="secondary" type="button" disabled>Отменить последнее изменение</button><span>В текущем сеансе</span></div>
     <details class="reminder-settings"><summary>Напоминания</summary><p>Проверяются, пока приложение открыто. При закрытии вкладки или засыпании устройства доставка не гарантируется.</p><button id="enable-notifications" class="secondary" type="button">Включить уведомления браузера</button><p id="notification-state" role="status"></p></details>
     <div id="reminder-list" aria-live="polite"></div>
     <p id="storage-error" class="notice" role="alert" hidden></p>
@@ -66,13 +63,6 @@
         <div id="calendar-undated"></div>
       </section>
     </section>
-    <section id="habits" hidden aria-label="Трекер привычек">
-      <h2>Привычки</h2>
-      <form id="habit-form"><label>Новая ежедневная привычка<input name="title" required maxlength="80" placeholder="Например, прогулка 20 минут"></label><button class="primary">Добавить</button></form>
-      <div class="calendar-nav"><button id="habit-prev" class="secondary">← Неделя</button><button id="habit-today" class="secondary">Сегодня</button><button id="habit-next" class="secondary">Неделя →</button></div>
-      <p id="habit-period"></p><div id="habit-list"></div>
-    </section>
-    <section id="week-review" hidden><h2>Обзор недели</h2><div class="calendar-nav"><button id="review-prev" class="secondary">← Неделя</button><button id="review-today" class="secondary">Сегодня</button><button id="review-next" class="secondary">Неделя →</button></div><p id="review-period"></p><div id="review-content"></div></section>
   </main>
   <dialog id="task-dialog" aria-labelledby="task-dialog-title">
     <h2 id="task-dialog-title">Новая задача</h2>
@@ -105,13 +95,6 @@
         <button class="secondary" type="button" data-close>Отмена</button>
         <button class="primary" type="submit">Сохранить</button>
       </div>
-    </form>
-  </dialog>
-  <dialog id="habit-dialog" aria-labelledby="habit-dialog-title">
-    <h2 id="habit-dialog-title">Изменить привычку</h2>
-    <form id="habit-edit-form">
-      <label>Название<input name="title" required maxlength="80" autofocus></label>
-      <div class="actions"><button class="secondary" type="button" data-close>Отмена</button><button class="primary" type="submit">Сохранить</button></div>
     </form>
   </dialog>
   <dialog id="project-dialog" aria-labelledby="project-dialog-title">

@@ -6,7 +6,6 @@ const categories = {
   personal: { name: "Личное", color: "#a25948" },
   health: { name: "Здоровье", color: "#55724f" },
 };
-let reviewOffset = 0;
 let lastParsedDate = null;
 let dateBeforeTyping = {};
 const deliveredReminders = new Set();
@@ -84,12 +83,6 @@ function initPlanning() {
       status.textContent = "Не удалось включить уведомления. Напоминания доступны внутри приложения.";
     }
   });
-  for (const [id, offset] of [["review-prev", -7], ["review-next", 7], ["review-today", 0]]) {
-    byId(id).addEventListener("click", () => {
-      reviewOffset = offset ? reviewOffset + offset : 0;
-      renderReview();
-    });
-  }
   setInterval(checkReminders, 15000);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) checkReminders(); });
   checkReminders();
@@ -120,24 +113,4 @@ function checkReminders() {
       try { new Notification("DesignFlow", { body: text, tag: key }); } catch { /* The in-app reminder remains visible. */ }
     }
   }
-}
-
-function renderReview() {
-  const start = addDays(monday(asDate(dateKey())), reviewOffset);
-  const end = addDays(start, 6);
-  const from = calendarKey(start);
-  const to = calendarKey(end);
-  byId("review-period").textContent = weekTitle.format(start) + " — " + weekTitle.format(end);
-  const tasks = calendarOccurrences(state.tasks.filter(task => !task.deleted), start, end)
-    .filter(task => task.due >= from && task.due <= to)
-    .sort((a, b) => (a.due + (a.time || "")).localeCompare(b.due + (b.time || "")));
-  const content = byId("review-content");
-  content.replaceChildren();
-  content.append(element("p", "", "Задачи со сроком на эту неделю. Готово " + tasks.filter(task => task.status === "done").length + " из " + tasks.length + "."));
-  for (const task of tasks) {
-    const row = element("div", "review-row");
-    row.append(element("p", "", fullDate.format(asDate(task.due))), calendarTask(task, dateKey(), false));
-    content.append(row);
-  }
-  if (!tasks.length) content.append(element("p", "empty", "На эту неделю пока нет задач."));
 }
