@@ -10,6 +10,7 @@ const priorityFilter = byId("priority-filter");
 const deadlineFilter = byId("deadline-filter");
 const resetFilters = byId("reset-filters");
 let activeProject = "";
+let draggingTask = "";
 const taskDialog = byId("task-dialog");
 const taskForm = byId("task-form");
 const confirmDialog = byId("confirm-dialog");
@@ -87,6 +88,14 @@ function focusProject(id) {
 function renderTask(task, today) {
   const card = element("article", "card");
   card.dataset.task = task.id;
+  card.draggable = true;
+  card.addEventListener("dragstart", event => {
+    draggingTask = task.id;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", task.id);
+    card.classList.add("is-dragging");
+  });
+  card.addEventListener("dragend", clearDrag);
   const top = element("div", "card-top");
   const project = state.projects.find(item => item.id === task.projectId);
   top.append(element("span", "badge", project?.name ?? "Без проекта"));
@@ -105,7 +114,14 @@ function renderTask(task, today) {
     time.dateTime = task.due;
     meta.append(time);
   }
-  card.append(meta);
+  const statusLabel = element("label", "", "Статус");
+  const status = element("select", "task-status-control");
+  status.setAttribute("aria-label", `Статус задачи «${task.title}»`);
+  fillSelect(status, Object.entries(statuses));
+  status.value = task.status;
+  status.addEventListener("change", () => moveTask(task.id, status.value));
+  statusLabel.append(status);
+  card.append(meta, statusLabel);
   return card;
 }
 
@@ -127,6 +143,22 @@ function render() {
     const tasks = scoped.filter(task => task.status === status);
     const column = element("section", "column");
     column.dataset.status = status;
+    column.addEventListener("dragover", event => {
+      if (!draggingTask) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "move";
+      column.classList.add("is-over");
+    });
+    column.addEventListener("dragleave", event => {
+      if (!column.contains(event.relatedTarget)) column.classList.remove("is-over");
+    });
+    column.addEventListener("drop", event => {
+      if (!draggingTask) return;
+      event.preventDefault();
+      const id = draggingTask;
+      clearDrag();
+      moveTask(id, status);
+    });
     const heading = element("h2", "", name);
     heading.id = `column-${status}`;
     column.setAttribute("aria-labelledby", heading.id);
@@ -173,6 +205,20 @@ function update(message, focus) {
   render();
   announce(message);
   focus?.();
+}
+
+function clearDrag() {
+  draggingTask = "";
+  board.querySelectorAll(".is-over, .is-dragging").forEach(node =>
+    node.classList.remove("is-over", "is-dragging"));
+}
+
+function moveTask(id, status) {
+  const task = state.tasks.find(item => item.id === id);
+  if (!task || task.status === status) return;
+  task.status = status;
+  update(`Статус задачи обновлён. ${statuses[status]}.`, () =>
+    (taskControl(id, ".task-status-control") ?? byId("new-task")).focus());
 }
 
 function confirmDeletion(message, action) {
