@@ -29,9 +29,7 @@ button, input, select, textarea { border: 1px solid var(--line); border-radius: 
 button { min-height: 42px; }
 .sidebar { background: #f1e9df; padding: 32px 20px 24px; display: flex; flex-direction: column; gap: 0; border-right: 1px solid var(--line); }
 .brand { display: flex; align-items: center; gap: 11px; margin: 0 0 43px; }
-.brand-mark { display: grid; place-items: center; flex: 0 0 42px; height: 42px; background: var(--accent); color: white; border-radius: 14px; font-size: 25px; }
-.brand strong { display: block; font-size: 21px; letter-spacing: -.6px; }
-.brand small { display: block; font-size: 11px; color: var(--muted); }
+.brand strong { display: block; font-size: 30px; letter-spacing: -1px; }
 .project-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .project-heading h2 { font-size: 13px; margin: 0; color: var(--muted); }
 #projects { display: grid; gap: 5px; }
@@ -263,10 +261,6 @@ body {
 .sidebar {
   background: #faf9ffcc;
   border-color: #e6e3f2;
-}
-.brand-mark {
-  background: linear-gradient(145deg, #535079, #202239);
-  box-shadow: 0 5px 18px #68619322;
 }
 .sidebar .views button[aria-pressed="true"] {
   color: #353051;
