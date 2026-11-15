@@ -200,3 +200,7 @@ dialog textarea { resize: vertical; min-height: 82px; }
 .undo-bar span, .checklist-summary { color: var(--muted); font-size: 12px; }
 button:disabled { opacity: .5; cursor: default; }
 .habit-row .agenda-header h3 { flex: 1; }
+.reminder-settings { margin: 12px 0; color: var(--muted); font-size: 13px; }
+.reminder-settings p { max-width: 650px; line-height: 1.5; }
+.review-row { padding: 10px 0; border-bottom: 1px solid var(--line); }
+.review-row > p { font-size: 13px; color: var(--muted); margin: 4px 0; }

@@ -116,6 +116,13 @@ function renderTask(task, today) {
   edit.classList.add("edit-task");
   top.append(edit);
   card.append(top, element("h3", "", task.title));
+  decorateTask(card, task);
+  if (task.time) card.append(element("p", "", task.time));
+  if (task.notes) {
+    const notes = element("details");
+    notes.append(element("summary", "", "Заметки"), element("p", "", task.notes));
+    card.append(notes);
+  }
   if (task.description) card.append(element("p", "", task.description));
   const meta = element("div", "card-meta");
   meta.append(element("span", `badge ${task.priority}`, priorities[task.priority]));
@@ -141,6 +148,20 @@ function renderTask(task, today) {
 }
 
 function render() {
+  const review = plannerView === "review";
+  byId("week-review").hidden = !review;
+  if (review) {
+    board.hidden = true;
+    byId("calendar").hidden = true;
+    byId("habits").hidden = true;
+    document.querySelector(".toolbar").hidden = true;
+    byId("new-task").hidden = true;
+    byId("board-title").textContent = "Моя неделя";
+    byId("progress-text").textContent = "Что получилось и что ещё впереди";
+    byId("progress").hidden = true;
+    renderReview();
+    return;
+  }
   byId("habits").hidden = plannerView !== "habits";
   document.querySelector(".toolbar").hidden = plannerView === "habits";
   byId("new-task").hidden = plannerView === "habits";
@@ -259,6 +280,9 @@ function openTask(task, status = "todo", due = "") {
   fields.amount.value = task?.amount ?? "";
   fields.steps.value = (task?.subtasks ?? []).map(step => step.title).join("\n");
   byId("repeat-help").textContent = task?.seriesId ? "Изменения относятся только к этому повторению. Для настройки серии откройте исходную задачу." : "Изменения исходной задачи применяются к будущим повторениям. Для повтора укажите первую дату.";
+  for (const key of ["time", "reminder", "category", "notes"]) fields[key].value = task?.[key] ?? "";
+  byId("date-suggestion").textContent = "";
+  byId("apply-date").hidden = true;
   syncTaskKind(false);
   byId("delete-task").hidden = !task;
   taskDialog.showModal();
@@ -316,6 +340,10 @@ taskForm.addEventListener("submit", event => {
   if (values.repeat && !values.due) {
     taskForm.elements.due.required = true;
     taskForm.elements.due.reportValidity();
+    return;
+  }
+  if (values.reminder !== "" && (!values.due || !values.time)) {
+    byId("date-suggestion").textContent = "Для напоминания укажите дату и время.";
     return;
   }
   const previous = state.tasks.find(item => item.id === editingTaskId);
@@ -413,6 +441,7 @@ byId("undo-change").addEventListener("click", () => {
   update("Последнее изменение отменено.");
 });
 
+initPlanning();
 initExtras();
 initCalendar();
 notice(loaded.problem);

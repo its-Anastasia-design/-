@@ -70,9 +70,10 @@ function calendarTask(task, today, compact) {
   button.dataset.task = task.id;
   button.dataset.priority = task.priority;
   button.dataset.status = task.status;
+  decorateTask(button, task, true);
   const project = state.projects.find(item => item.id === task.projectId);
   const overdue = task.due && task.due < today && task.status !== "done";
-  const details = [task.kind === "birthday" ? "День рождения" : task.kind === "subscription" ? "Подписка · " + money(task.amount) : "", project?.name, statuses[task.status], priorities[task.priority], overdue ? "Просрочено" : ""].filter(Boolean);
+  const details = [task.time, categories[task.category]?.name, task.kind === "birthday" ? "День рождения" : task.kind === "subscription" ? "Подписка · " + money(task.amount) : "", project?.name, statuses[task.status], priorities[task.priority], overdue ? "Просрочено" : ""].filter(Boolean);
   button.title = [task.title, ...details].join(" · ");
   button.setAttribute("aria-label", button.title);
   button.append(dot(colors[project?.color] ?? colors.sand), element("span", "calendar-task-title", (task.kind === "birthday" ? "🎂 " : task.kind === "subscription" ? "₽ " : "") + task.title));
@@ -126,6 +127,7 @@ function renderCalendar(tasks, today) {
   byId("calendar-prev").setAttribute("aria-label", `Назад (${period})`);
   byId("calendar-next").setAttribute("aria-label", `Вперёд (${period})`);
   tasks = calendarOccurrences(tasks, start, end).filter(task => matchesDeadline(task, deadlineFilter.value, today));
+  tasks.sort((a, b) => (a.time || "99:99").localeCompare(b.time || "99:99"));
   displayedCalendarTasks = tasks;
   const subscriptions = tasks.filter(task => task.kind === "subscription" && task.due >= calendarKey(start) && task.due <= calendarKey(end) && task.status !== "done");
   byId("subscription-summary").textContent = subscriptions.length ? `Оплаты за этот период: ${money(subscriptions.reduce((sum, task) => sum + (Number(task.amount) || 0), 0))}. Отметьте оплату как «Готово» после списания.` : "";
