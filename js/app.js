@@ -130,6 +130,7 @@ function renderTask(task, today) {
 }
 
 function render() {
+  document.body.classList.toggle("calendar-view", plannerView !== "board");
   renderProjects();
   const project = state.projects.find(item => item.id === activeProject);
   const scoped = project ? state.tasks.filter(task => task.projectId === project.id) : state.tasks;
