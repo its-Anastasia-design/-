@@ -280,15 +280,12 @@ function showTaskStage(stage, focus = false) {
   byId("task-details").hidden = basic;
   byId("task-basic-tab").setAttribute("aria-pressed", String(basic));
   byId("task-details-tab").setAttribute("aria-pressed", String(!basic));
-  byId("task-next").textContent = basic ? "Далее →" : "← Назад";
   taskDialog.scrollTop = 0;
   if (focus) (basic ? taskForm.elements.title : taskForm.elements.kind).focus();
 }
 
 byId("task-basic-tab").addEventListener("click", () => showTaskStage("basic", true));
 byId("task-details-tab").addEventListener("click", () => showTaskStage("details", true));
-byId("task-next").addEventListener("click", () =>
-  showTaskStage(byId("task-basic").hidden ? "basic" : "details", true));
 
 function validateTaskForm() {
   const fields = taskForm.elements;
