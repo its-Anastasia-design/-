@@ -110,7 +110,7 @@ function checkReminders() {
     banner.append(open, icon("×", "Закрыть напоминание", () => banner.remove()));
     byId("reminder-list").append(banner);
     if ("Notification" in window && Notification.permission === "granted") {
-      try { new Notification("Лад", { body: text, tag: key }); } catch { /* The in-app reminder remains visible. */ }
+      try { new Notification("DesignFlow", { body: text, tag: key }); } catch { /* The in-app reminder remains visible. */ }
     }
   }
 }
