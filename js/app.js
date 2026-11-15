@@ -250,6 +250,7 @@ function openTask(task, status = "todo", due = "") {
   fillSelect(byId("task-priority"), Object.entries(priorities));
   const fields = taskForm.elements;
   fields.title.setCustomValidity("");
+  fields.time.required = false;
   fields.title.value = task?.title ?? "";
   fields.description.value = task?.description ?? "";
   fields.projectId.value = task?.projectId ?? activeProject;
@@ -267,7 +268,39 @@ function openTask(task, status = "todo", due = "") {
   resetTypedDate();
   syncTaskKind(false);
   byId("delete-task").hidden = !task;
+  byId("task-error").textContent = "";
+  taskForm.querySelector(".task-extra-notes").open = false;
+  showTaskStage("basic");
   taskDialog.showModal();
+}
+
+function showTaskStage(stage, focus = false) {
+  const basic = stage === "basic";
+  byId("task-basic").hidden = !basic;
+  byId("task-details").hidden = basic;
+  byId("task-basic-tab").setAttribute("aria-pressed", String(basic));
+  byId("task-details-tab").setAttribute("aria-pressed", String(!basic));
+  byId("task-next").textContent = basic ? "Далее →" : "← Назад";
+  taskDialog.scrollTop = 0;
+  if (focus) (basic ? taskForm.elements.title : taskForm.elements.kind).focus();
+}
+
+byId("task-basic-tab").addEventListener("click", () => showTaskStage("basic", true));
+byId("task-details-tab").addEventListener("click", () => showTaskStage("details", true));
+byId("task-next").addEventListener("click", () =>
+  showTaskStage(byId("task-basic").hidden ? "basic" : "details", true));
+
+function validateTaskForm() {
+  const fields = taskForm.elements;
+  fields.due.required = !!fields.repeat.value || fields.kind.value !== "task" || fields.reminder.value !== "";
+  fields.time.required = fields.reminder.value !== "";
+  const invalid = [...fields].find(field => field.willValidate && !field.validity.valid);
+  if (!invalid) return true;
+  showTaskStage(invalid.closest("#task-details") ? "details" : "basic");
+  const disclosure = invalid.closest("details");
+  if (disclosure) disclosure.open = true;
+  invalid.reportValidity();
+  return false;
 }
 
 function taskControl(id, selector) {
@@ -317,7 +350,12 @@ function validateName(input) {
 taskForm.elements.title.addEventListener("input", event => event.target.setCustomValidity(""));
 taskForm.addEventListener("submit", event => {
   event.preventDefault();
-  if (!validateName(taskForm.elements.title)) return;
+  if (!validateTaskForm()) return;
+  if (!taskForm.elements.title.value.trim()) {
+    showTaskStage("basic");
+    validateName(taskForm.elements.title);
+    return;
+  }
   const values = Object.fromEntries(new FormData(taskForm));
   if (values.repeat && !values.due) {
     taskForm.elements.due.required = true;
@@ -325,7 +363,8 @@ taskForm.addEventListener("submit", event => {
     return;
   }
   if (values.reminder !== "" && (!values.due || !values.time)) {
-    byId("date-suggestion").textContent = "Для напоминания укажите дату и время.";
+    showTaskStage("basic");
+    byId("task-error").textContent = "Для напоминания укажите дату и время.";
     return;
   }
   const previous = state.tasks.find(item => item.id === editingTaskId);

@@ -79,33 +79,34 @@
   </dialog>
   <dialog id="task-dialog" aria-labelledby="task-dialog-title">
     <h2 id="task-dialog-title">Новая задача</h2>
-    <form id="task-form">
-      <label>Название<input name="title" maxlength="100" required autofocus></label>
-      <p class="form-help">Можно написать «завтра в 15:00» прямо в названии — дата и время подставятся автоматически.</p>
-      <p id="date-suggestion" role="status"></p>
-      <label>Описание<textarea name="description" maxlength="1000" rows="3"></textarea></label>
-      <div class="fields">
-        <label>Проект<select name="projectId" id="task-project"></select></label>
-        <label>Статус<select name="status" id="task-status"></select></label>
-        <label>Приоритет<select name="priority" id="task-priority"></select></label>
-        <label>Срок<input type="date" name="due" max="9999-12-31"></label>
-      </div>
-      <div class="fields">
-        <label>Тип<select name="kind"><option value="task">Задача</option><option value="birthday">День рождения</option><option value="subscription">Оплата подписки</option></select></label>
-        <label>Повтор<select name="repeat"><option value="">Без повтора</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option><option value="yearly">Ежегодно</option></select></label>
-        <label id="amount-field" hidden>Сумма, ₽<input name="amount" type="number" min="0" max="100000000" step="0.01"></label>
-      </div>
-      <p id="repeat-help" class="form-help">Повтор создаёт даты в календаре. Отдельное повторение можно перенести или отметить выполненным.</p>
-      <label>Подзадачи — каждая с новой строки<textarea name="steps" maxlength="3000" placeholder="Собрать референсы&#10;Сделать эскиз"></textarea></label>
-      <div class="fields">
-        <label>Время<input name="time" type="time"></label>
-        <label>Напомнить<select name="reminder"><option value="">Без напоминания</option><option value="0">В момент события</option><option value="15">За 15 минут</option><option value="60">За час</option><option value="1440">За день</option><option value="4320">За 3 дня</option></select></label>
-        <label>Категория<select name="category"><option value="">Без категории</option><option value="study">Учёба</option><option value="work">Работа</option><option value="personal">Личное</option><option value="health">Здоровье</option></select></label>
-      </div>
-      <label>Заметки<textarea name="notes" maxlength="5000" placeholder="Результат встречи, идеи или следующий шаг"></textarea></label>
+    <nav class="task-stages" aria-label="Этапы задачи">
+      <button type="button" id="task-basic-tab" aria-controls="task-basic" aria-pressed="true">Основное</button>
+      <button type="button" id="task-details-tab" aria-controls="task-details" aria-pressed="false">Детали</button>
+    </nav>
+    <form id="task-form" novalidate>
+      <section id="task-basic" class="task-stage" aria-label="Основное">
+<label>Название<input name="title" maxlength="100" required autofocus></label>
+        <p class="form-help">Например, «завтра в 15:00 созвон» — дата и время заполнятся сами.</p>
+        <p id="date-suggestion" role="status"></p>
+<div class="fields"><label>Срок<input type="date" name="due" max="9999-12-31"></label>
+<label>Время<input name="time" type="time"></label></div><label>Статус<select name="status" id="task-status"></select></label>
+        <p class="form-help">Можно сразу сохранить. Всё остальное — по желанию.</p>
+      </section>
+      <section id="task-details" class="task-stage" aria-label="Детали" hidden>
+<div class="fields"><label>Тип<select name="kind"><option value="task">Задача</option><option value="birthday">День рождения</option><option value="subscription">Оплата подписки</option></select></label>
+<label>Повтор<select name="repeat"><option value="">Без повтора</option><option value="daily">Ежедневно</option><option value="weekly">Еженедельно</option><option value="monthly">Ежемесячно</option><option value="yearly">Ежегодно</option></select></label></div><label id="amount-field" hidden>Сумма, ₽<input name="amount" type="number" min="0" max="100000000" step="0.01"></label>
+        <p id="repeat-help" class="form-help"></p>
+<label>Напомнить<select name="reminder"><option value="">Без напоминания</option><option value="0">В момент события</option><option value="15">За 15 минут</option><option value="60">За час</option><option value="1440">За день</option><option value="4320">За 3 дня</option></select></label><div class="fields"><label>Проект<select name="projectId" id="task-project"></select></label>
+<label>Приоритет<select name="priority" id="task-priority"></select></label></div><label>Категория<select name="category"><option value="">Без категории</option><option value="study">Учёба</option><option value="work">Работа</option><option value="personal">Личное</option><option value="health">Здоровье</option></select></label><label>Подзадачи — каждая с новой строки<textarea name="steps" maxlength="3000" placeholder="Собрать референсы&#10;Сделать эскиз"></textarea></label>
+        <details class="task-extra-notes"><summary>Описание и заметки</summary>
+<label>Описание<textarea name="description" maxlength="1000" rows="3"></textarea></label><label>Заметки<textarea name="notes" maxlength="5000" placeholder="Результат встречи, идеи или следующий шаг"></textarea></label>
+        </details>
+      </section>
+      <p id="task-error" class="form-help" role="alert"></p>
       <div class="actions">
         <button class="danger" id="delete-task" type="button">Удалить</button>
         <button class="secondary" type="button" data-close>Отмена</button>
+        <button class="secondary" id="task-next" type="button">Далее →</button>
         <button class="primary" type="submit">Сохранить</button>
       </div>
     </form>

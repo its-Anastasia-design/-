@@ -371,3 +371,14 @@ dialog h2 { color: #252439; }
 .count { background: #ffffffc9; }
 .danger { background: #f7e7ef; border-color: #e9cfdd; color: #813955; }
 .danger:hover { background: #f0d8e6; }
+
+.task-stages { display: flex; gap: 6px; padding: 5px; background: #eeeafa; border-radius: 14px; margin-bottom: 20px; }
+.task-stages button { flex: 1; background: transparent; border-color: transparent; font-weight: 600; color: var(--muted); }
+.task-stages button[aria-pressed="true"] { background: white; color: #29283d; box-shadow: 0 2px 8px #5143690d; }
+.task-stage { display: grid; gap: 14px; }
+.task-stage p { margin: 0; }
+#date-suggestion:empty, #task-error:empty { display: none; }
+.task-extra-notes { color: var(--muted); font-size: 13px; }
+.task-extra-notes summary { cursor: pointer; padding: 6px 0; }
+.task-extra-notes label { margin-top: 12px; }
+#task-dialog .actions { position: sticky; bottom: -24px; background: #fdfbff; padding: 12px 0; border-top: 1px solid var(--line); }
