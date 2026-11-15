@@ -52,7 +52,7 @@ function shiftCalendar(direction) {
 
 function calendarDayControl() {
   return byId("calendar").hidden ? null :
-    byId("calendar-grid").querySelector('[aria-pressed="true"]');
+    byId("calendar-grid").querySelector(".is-selected .calendar-day-select");
 }
 
 function calendarTaskControl(id) {
@@ -110,6 +110,7 @@ function renderCalendar(tasks, today) {
 
   const agendaTitle = element("h3", "", fullDate.format(focusDate));
   agendaTitle.id = "agenda-title";
+  agendaTitle.tabIndex = -1;
   const add = icon("+", `Добавить задачу на ${fullDate.format(focusDate)}`, () => openTask(null, "todo", calendarDate));
   const header = element("div", "agenda-header");
   header.append(agendaTitle, add);
@@ -132,18 +133,33 @@ function calendarDay(date, key, tasks, today, outside) {
   if (key === calendarDate) day.classList.add("is-selected");
   const select = element("button", "calendar-day-select", String(date.getDate()));
   select.type = "button";
-  select.setAttribute("aria-label", `${fullDate.format(date)}. Задач: ${tasks.length}.`);
-  select.setAttribute("aria-pressed", String(key === calendarDate));
+  const label = fullDate.format(date);
+  select.setAttribute("aria-label", `Добавить задачу на ${label}`);
+  select.title = select.getAttribute("aria-label");
   if (key === today) select.setAttribute("aria-current", "date");
   select.addEventListener("click", () => {
     calendarDate = key;
     render();
     calendarDayControl()?.focus();
+    openTask(null, "todo", key);
   });
   const weekday = element("span", "calendar-mobile-weekday", dayNames[(date.getDay() + 6) % 7]);
   weekday.setAttribute("aria-hidden", "true");
   select.prepend(weekday);
-  select.append(element("span", "calendar-day-count", tasks.length ? String(tasks.length) : ""));
-  day.append(select, ...tasks.map(task => calendarTask(task, today, true)));
+  const header = element("div", "calendar-day-header");
+  header.append(select);
+  if (tasks.length) {
+    const count = element("button", "calendar-day-count", String(tasks.length));
+    count.type = "button";
+    count.setAttribute("aria-label", `Показать задачи на ${label}. Всего: ${tasks.length}.`);
+    count.title = count.getAttribute("aria-label");
+    count.addEventListener("click", () => {
+      calendarDate = key;
+      render();
+      byId("agenda-title").focus();
+    });
+    header.append(count);
+  }
+  day.append(header, ...tasks.map(task => calendarTask(task, today, true)));
   return day;
 }
