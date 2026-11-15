@@ -3,7 +3,6 @@
 const byId = id => document.getElementById(id);
 const loaded = loadState();
 const state = loaded.state;
-state.habits ??= [];
 const board = byId("board");
 const projectNav = byId("projects");
 const search = byId("search");
@@ -77,6 +76,7 @@ function renderProjects() {
     button.append(dot(colors[project.color]), element("span", "label", project.name), element("span", "project-count", count));
     button.addEventListener("click", () => {
       activeProject = project.id;
+      plannerView = "board";
       render();
       focusProject(activeProject);
     });
@@ -108,6 +108,13 @@ function renderTask(task, today) {
   edit.classList.add("edit-task");
   top.append(edit);
   card.append(top, element("h3", "", task.title));
+  decorateTask(card, task);
+  if (task.time) card.append(element("p", "", task.time));
+  if (task.notes) {
+    const notes = element("details");
+    notes.append(element("summary", "", "Заметки"), element("p", "", task.notes));
+    card.append(notes);
+  }
   if (task.description) card.append(element("p", "", task.description));
   const meta = element("div", "card-meta");
   meta.append(element("span", `badge ${task.priority}`, priorities[task.priority]));
@@ -133,15 +140,19 @@ function renderTask(task, today) {
 }
 
 function render() {
-  byId("habits").hidden = plannerView !== "habits";
-  document.querySelector(".toolbar").hidden = plannerView === "habits";
-  byId("new-task").hidden = plannerView === "habits";
-  if (plannerView === "habits") {
-    board.hidden = true;
-    byId("calendar").hidden = true;
-    renderHabits();
+  document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === plannerView)));
+  const home = plannerView === "home";
+  byId("home").hidden = !home;
+  document.querySelector(".hero").hidden = home;
+  renderProjects();
+  if (home) {
+    for (const id of ["board", "calendar"]) byId(id).hidden = true;
+    document.querySelector(".toolbar").hidden = true;
+    renderHome();
     return;
   }
+  document.querySelector(".toolbar").hidden = false;
+  byId("new-task").hidden = false;
   renderProjects();
   const project = state.projects.find(item => item.id === activeProject);
   const scoped = state.tasks.filter(task => !task.deleted && (!project || task.projectId === project.id));
@@ -239,6 +250,7 @@ function openTask(task, status = "todo", due = "") {
   fillSelect(byId("task-priority"), Object.entries(priorities));
   const fields = taskForm.elements;
   fields.title.setCustomValidity("");
+  fields.time.required = false;
   fields.title.value = task?.title ?? "";
   fields.description.value = task?.description ?? "";
   fields.projectId.value = task?.projectId ?? activeProject;
@@ -251,9 +263,41 @@ function openTask(task, status = "todo", due = "") {
   fields.amount.value = task?.amount ?? "";
   fields.steps.value = (task?.subtasks ?? []).map(step => step.title).join("\n");
   byId("repeat-help").textContent = task?.seriesId ? "Изменения относятся только к этому повторению. Для настройки серии откройте исходную задачу." : "Изменения исходной задачи применяются к будущим повторениям. Для повтора укажите первую дату.";
+  for (const key of ["time", "reminder", "category", "notes"]) fields[key].value = task?.[key] ?? "";
+  byId("date-suggestion").textContent = "";
+  resetTypedDate();
   syncTaskKind(false);
   byId("delete-task").hidden = !task;
+  byId("task-error").textContent = "";
+  taskForm.querySelector(".task-extra-notes").open = false;
+  showTaskStage("basic");
   taskDialog.showModal();
+}
+
+function showTaskStage(stage, focus = false) {
+  const basic = stage === "basic";
+  byId("task-basic").hidden = !basic;
+  byId("task-details").hidden = basic;
+  byId("task-basic-tab").setAttribute("aria-pressed", String(basic));
+  byId("task-details-tab").setAttribute("aria-pressed", String(!basic));
+  taskDialog.scrollTop = 0;
+  if (focus) (basic ? taskForm.elements.title : taskForm.elements.kind).focus();
+}
+
+byId("task-basic-tab").addEventListener("click", () => showTaskStage("basic", true));
+byId("task-details-tab").addEventListener("click", () => showTaskStage("details", true));
+
+function validateTaskForm() {
+  const fields = taskForm.elements;
+  fields.due.required = !!fields.repeat.value || fields.kind.value !== "task" || fields.reminder.value !== "";
+  fields.time.required = fields.reminder.value !== "";
+  const invalid = [...fields].find(field => field.willValidate && !field.validity.valid);
+  if (!invalid) return true;
+  showTaskStage(invalid.closest("#task-details") ? "details" : "basic");
+  const disclosure = invalid.closest("details");
+  if (disclosure) disclosure.open = true;
+  invalid.reportValidity();
+  return false;
 }
 
 function taskControl(id, selector) {
@@ -303,11 +347,21 @@ function validateName(input) {
 taskForm.elements.title.addEventListener("input", event => event.target.setCustomValidity(""));
 taskForm.addEventListener("submit", event => {
   event.preventDefault();
-  if (!validateName(taskForm.elements.title)) return;
+  if (!validateTaskForm()) return;
+  if (!taskForm.elements.title.value.trim()) {
+    showTaskStage("basic");
+    validateName(taskForm.elements.title);
+    return;
+  }
   const values = Object.fromEntries(new FormData(taskForm));
   if (values.repeat && !values.due) {
     taskForm.elements.due.required = true;
     taskForm.elements.due.reportValidity();
+    return;
+  }
+  if (values.reminder !== "" && (!values.due || !values.time)) {
+    showTaskStage("basic");
+    byId("task-error").textContent = "Для напоминания укажите дату и время.";
     return;
   }
   const previous = state.tasks.find(item => item.id === editingTaskId);
@@ -393,6 +447,8 @@ document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
 
+initProfile();
+initPlanning();
 initExtras();
 initCalendar();
 notice(loaded.problem);

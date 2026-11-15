@@ -1,6 +1,5 @@
 "use strict";
 
-let habitOffset = 0;
 const money = value => new Intl.NumberFormat("ru", { style: "currency", currency: "RUB" }).format(Number(value) || 0);
 
 function occurrenceDate(task, index) {
@@ -57,6 +56,13 @@ function materialize(task) {
 
 function taskChecklist(task) {
   const list = element("div", "checklist");
+  if (!task.subtasks?.length) return list;
+  const summary = element("p", "checklist-summary");
+  const refreshSummary = () => {
+    summary.textContent = `Шаги: ${task.subtasks.filter(step => step.done).length} из ${task.subtasks.length}`;
+  };
+  refreshSummary();
+  list.append(summary);
   for (const [index, step] of (task.subtasks ?? []).entries()) {
     const label = element("label", "check-item");
     const checkbox = element("input");
@@ -66,6 +72,8 @@ function taskChecklist(task) {
     checkbox.addEventListener("change", () => {
       const saved = task.virtual ? materialize(task) : task;
       saved.subtasks[index].done = checkbox.checked;
+      step.done = checkbox.checked;
+      refreshSummary();
       persist();
       announce(step.done ? "Подзадача выполнена." : "Отметка снята.");
     });
@@ -90,56 +98,4 @@ function syncTaskKind(defaultRepeat) {
 function initExtras() {
   taskForm.elements.kind.addEventListener("change", () => syncTaskKind(true));
   taskForm.elements.repeat.addEventListener("change", () => syncTaskKind(false));
-  byId("habit-form").addEventListener("submit", event => {
-    event.preventDefault();
-    const input = event.target.elements.title;
-    const title = input.value.trim();
-    if (!title) return;
-    state.habits.push({ id: newId(), title, days: {} });
-    input.value = "";
-    update("Привычка добавлена.");
-  });
-  byId("habit-prev").addEventListener("click", () => { habitOffset -= 7; renderHabits(); });
-  byId("habit-next").addEventListener("click", () => { habitOffset += 7; renderHabits(); });
-  byId("habit-today").addEventListener("click", () => { habitOffset = 0; renderHabits(); });
-}
-
-function renderHabits() {
-  const start = addDays(monday(asDate(dateKey())), habitOffset);
-  byId("board-title").textContent = "Мои привычки";
-  byId("progress-text").textContent = "Небольшие действия каждый день";
-  byId("progress").hidden = true;
-  byId("habit-period").textContent = weekTitle.format(start) + " — " + weekTitle.format(addDays(start, 6));
-  const list = byId("habit-list");
-  list.replaceChildren();
-  if (!state.habits.length) list.append(element("p", "empty", "Добавьте первую привычку и отмечайте дни, когда удалось её выполнить."));
-  for (const habit of state.habits) {
-    const row = element("article", "habit-row");
-    const head = element("div", "agenda-header");
-    head.append(element("h3", "", habit.title), icon("×", "Удалить привычку «" + habit.title + "»", () =>
-      confirmDeletion("Удалить привычку и все её отметки?", () => {
-        state.habits = state.habits.filter(item => item.id !== habit.id);
-        update("Привычка удалена.");
-      })));
-    row.append(head);
-    const days = element("div", "habit-days");
-    for (let i = 0; i < 7; i++) {
-      const date = addDays(start, i);
-      const key = calendarKey(date);
-      const label = element("label", "habit-day", dayNames[i] + " " + date.getDate());
-      const input = element("input");
-      input.type = "checkbox";
-      input.checked = !!habit.days[key];
-      input.setAttribute("aria-label", habit.title + ", " + fullDate.format(date));
-      input.addEventListener("change", () => {
-        habit.days[key] = input.checked;
-        persist();
-        announce("Отметка привычки сохранена.");
-      });
-      label.append(input);
-      days.append(label);
-    }
-    row.append(days);
-    list.append(row);
-  }
 }
