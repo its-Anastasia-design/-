@@ -195,3 +195,7 @@ dialog textarea { resize: vertical; min-height: 82px; }
 .habit-row h3 { margin: 0; overflow-wrap: anywhere; }
 .habit-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
 .habit-day { align-items: center; justify-items: center; padding: 8px 0; font-size: 12px; }
+
+.paint-import {display:flex;flex-direction:column;gap:7px;padding:12px 0;}
+.paint-import button {width:100%;text-align:center;white-space:normal;}
+.paint-import small {opacity:.7;text-align:center;}
