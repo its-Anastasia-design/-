@@ -85,6 +85,7 @@ function renderProjects() {
     button.append(dot(colors[project.color]), element("span", "label", project.name), element("span", "project-count", count));
     button.addEventListener("click", () => {
       activeProject = project.id;
+      plannerView = "board";
       render();
       focusProject(activeProject);
     });
@@ -148,6 +149,17 @@ function renderTask(task, today) {
 }
 
 function render() {
+  document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === plannerView)));
+  const home = plannerView === "home";
+  byId("home").hidden = !home;
+  document.querySelector(".hero").hidden = home;
+  renderProjects();
+  if (home) {
+    for (const id of ["board", "calendar", "habits", "week-review"]) byId(id).hidden = true;
+    document.querySelector(".toolbar").hidden = true;
+    renderHome();
+    return;
+  }
   const review = plannerView === "review";
   byId("week-review").hidden = !review;
   if (review) {
