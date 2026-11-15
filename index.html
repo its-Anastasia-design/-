@@ -74,8 +74,8 @@
     <h2 id="task-dialog-title">Новая задача</h2>
     <form id="task-form">
       <label>Название<input name="title" maxlength="100" required autofocus></label>
-      <button id="parse-date" type="button" class="secondary">Распознать дату и время из названия</button>
-      <p id="date-suggestion" role="status"></p><button id="apply-date" class="secondary" type="button" hidden>Применить дату и время</button>
+      <p class="form-help">Можно написать «завтра в 15:00» прямо в названии — дата и время подставятся автоматически.</p>
+      <p id="date-suggestion" role="status"></p>
       <label>Описание<textarea name="description" maxlength="1000" rows="3"></textarea></label>
       <div class="fields">
         <label>Проект<select name="projectId" id="task-project"></select></label>

@@ -282,7 +282,7 @@ function openTask(task, status = "todo", due = "") {
   byId("repeat-help").textContent = task?.seriesId ? "Изменения относятся только к этому повторению. Для настройки серии откройте исходную задачу." : "Изменения исходной задачи применяются к будущим повторениям. Для повтора укажите первую дату.";
   for (const key of ["time", "reminder", "category", "notes"]) fields[key].value = task?.[key] ?? "";
   byId("date-suggestion").textContent = "";
-  byId("apply-date").hidden = true;
+  resetTypedDate();
   syncTaskKind(false);
   byId("delete-task").hidden = !task;
   taskDialog.showModal();

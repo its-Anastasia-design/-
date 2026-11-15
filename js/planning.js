@@ -7,7 +7,8 @@ const categories = {
   health: { name: "Здоровье", color: "#55724f" },
 };
 let reviewOffset = 0;
-let suggestedDate;
+let lastParsedDate = null;
+let dateBeforeTyping = {};
 const deliveredReminders = new Set();
 
 function decorateTask(node, task, compact = false) {
@@ -44,20 +45,32 @@ function parseTaskDate(text, now = new Date()) {
   return { due: calendarKey(date), time: time ? time[1].padStart(2, "0") + ":" + time[2] : "" };
 }
 
+function resetTypedDate() {
+  lastParsedDate = null;
+  dateBeforeTyping = { due: taskForm.elements.due.value, time: taskForm.elements.time.value };
+}
+
+function applyTypedDate() {
+  const parsed = parseTaskDate(taskForm.elements.title.value);
+  const fields = taskForm.elements;
+  const next = parsed.error ? { due: "", time: "" } : parsed;
+  for (const key of ["due", "time"]) {
+    const previous = lastParsedDate?.[key] || "";
+    if (next[key] && next[key] !== previous) {
+      // Keep the value preceding automatic entry so removing the phrase restores it.
+      if (!previous) dateBeforeTyping[key] = fields[key].value;
+      fields[key].value = next[key];
+    } else if (!next[key] && previous && fields[key].value === previous) {
+      fields[key].value = dateBeforeTyping[key];
+    }
+  }
+  lastParsedDate = next;
+  byId("date-suggestion").textContent = parsed.error ? "" :
+    "Дата из названия: " + fullDate.format(asDate(parsed.due)) + (parsed.time ? ", " + parsed.time : "") + ".";
+}
+
 function initPlanning() {
-  byId("parse-date").addEventListener("click", () => {
-    suggestedDate = parseTaskDate(taskForm.elements.title.value);
-    byId("apply-date").hidden = !!suggestedDate.error;
-    byId("date-suggestion").textContent = suggestedDate.error ||
-      fullDate.format(asDate(suggestedDate.due)) + (suggestedDate.time ? ", " + suggestedDate.time : "") + ". Проверьте год перед применением.";
-  });
-  byId("apply-date").addEventListener("click", () => {
-    if (!suggestedDate || suggestedDate.error) return;
-    taskForm.elements.due.value = suggestedDate.due;
-    if (suggestedDate.time) taskForm.elements.time.value = suggestedDate.time;
-    byId("apply-date").hidden = true;
-    byId("date-suggestion").textContent = "Дата и время применены.";
-  });
+  taskForm.elements.title.addEventListener("input", applyTypedDate);
   byId("enable-notifications").addEventListener("click", async () => {
     const status = byId("notification-state");
     if (!("Notification" in window)) {
