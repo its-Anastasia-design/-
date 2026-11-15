@@ -11,7 +11,8 @@ function renderHome() {
   home.replaceChildren(element("h1", "home-title", "Мой прогресс"));
   const welcome = element("section", "home-welcome");
   const intro = element("div", "home-intro");
-  intro.append(element("p", "", "Привет, Анастасия!"),
+  const name = state.profile?.displayName?.trim();
+  intro.append(element("p", "home-greeting", name ? `Привет, ${name}!` : "Привет!"),
     element("h2", "", "В своём темпе, шаг за шагом"),
     element("p", "", week.length ? `На этой неделе выполнено ${done} из ${week.length} дел.` : "На этой неделе пока нет запланированных дел."));
   const add = element("button", "primary", "＋ Новая задача");
@@ -91,4 +92,19 @@ function renderHome() {
 function navigateHome(view) {
   plannerView = view;
   render();
+}
+
+function initProfile() {
+  const dialog = byId("profile-dialog");
+  const form = byId("profile-form");
+  byId("profile-settings").addEventListener("click", () => {
+    form.elements.displayName.value = state.profile?.displayName ?? "";
+    dialog.showModal();
+  });
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    state.profile = { ...state.profile, displayName: form.elements.displayName.value.trim() };
+    dialog.close();
+    update("Настройки сохранены.", () => byId("profile-settings").focus());
+  });
 }

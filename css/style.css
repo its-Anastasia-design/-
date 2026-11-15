@@ -337,3 +337,6 @@ body.home-view {
 @media (max-width: 520px) {
   .home-view .home-welcome { padding: 18px; gap: 8px; }
 }
+
+.profile-settings { margin-top: 28px; text-align: left; }
+.home-greeting { overflow-wrap: anywhere; }

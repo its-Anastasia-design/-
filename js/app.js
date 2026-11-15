@@ -412,6 +412,7 @@ document.querySelectorAll("[data-close]").forEach(button =>
   button.addEventListener("click", () => button.closest("dialog").close()));
 byId("new-task").addEventListener("click", () => openTask(null, "todo", plannerView === "board" ? "" : calendarDate));
 
+initProfile();
 initPlanning();
 initExtras();
 initCalendar();

@@ -26,6 +26,7 @@
     </nav>
     <div class="project-heading"><h2>Проекты</h2><button class="icon" id="new-project" type="button" aria-label="Добавить проект" title="Добавить проект">+</button></div>
     <nav id="projects" aria-label="Выбор проекта"></nav>
+    <button id="profile-settings" class="secondary profile-settings" type="button">Мои настройки</button>
     <div class="local-note"><span aria-hidden="true">◌</span> Данные хранятся в этом браузере</div>
   </aside>
   <main id="main">
@@ -64,6 +65,18 @@
       </section>
     </section>
   </main>
+  <dialog id="profile-dialog" aria-labelledby="profile-title" aria-describedby="profile-help">
+    <h2 id="profile-title">Мои настройки</h2>
+    <p id="profile-help">Имя нужно для приветствия и сохраняется в этом браузере.</p>
+    <form id="profile-form">
+      <label>Как к тебе обращаться?<input name="displayName" maxlength="40" autocomplete="off" placeholder="Имя или никнейм" autofocus></label>
+      <p class="form-help">Поле можно оставить пустым — тогда на главной будет «Привет!».</p>
+      <div class="actions">
+        <button class="secondary" type="button" data-close>Отмена</button>
+        <button class="primary" type="submit">Сохранить</button>
+      </div>
+    </form>
+  </dialog>
   <dialog id="task-dialog" aria-labelledby="task-dialog-title">
     <h2 id="task-dialog-title">Новая задача</h2>
     <form id="task-form">
