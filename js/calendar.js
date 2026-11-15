@@ -6,6 +6,8 @@ const monthTitle = new Intl.DateTimeFormat("ru", { month: "long", year: "numeric
 const weekTitle = new Intl.DateTimeFormat("ru", { day: "numeric", month: "short", year: "numeric" });
 let plannerView = "board";
 let calendarDate = dateKey();
+let calendarDragId = "";
+let calendarDropTime = 0;
 
 function asDate(key) {
   return new Date(`${key}T12:00:00`);
@@ -74,8 +76,37 @@ function calendarTask(task, today, compact) {
   button.setAttribute("aria-label", button.title);
   button.append(dot(colors[project?.color] ?? colors.sand), element("span", "calendar-task-title", task.title));
   if (!compact) button.append(element("span", "calendar-task-meta", details.join(" · ")));
-  button.addEventListener("click", () => openTask(task));
+  button.draggable = true;
+  button.addEventListener("dragstart", event => {
+    calendarDragId = task.id;
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", task.id);
+    button.classList.add("is-dragging");
+  });
+  button.addEventListener("dragend", clearCalendarDrag);
+  button.addEventListener("click", () => {
+    if (Date.now() - calendarDropTime > 300) openTask(task);
+  });
   return button;
+}
+
+function clearCalendarDrag() {
+  calendarDragId = "";
+  byId("calendar").querySelectorAll(".is-over, .is-dragging").forEach(node =>
+    node.classList.remove("is-over", "is-dragging"));
+}
+
+function dropCalendarTask(event, key) {
+  if (!calendarDragId) return;
+  event.preventDefault();
+  const task = state.tasks.find(item => item.id === calendarDragId);
+  clearCalendarDrag();
+  calendarDropTime = Date.now();
+  if (!task || task.due === key) return;
+  task.due = key;
+  calendarDate = key;
+  update(`Задача перенесена на ${fullDate.format(asDate(key))}.`, () =>
+    (calendarTaskControl(task.id) ?? calendarDayControl())?.focus());
 }
 
 function renderCalendar(tasks, today) {
@@ -128,6 +159,16 @@ function calendarList(tasks, today, emptyText) {
 function calendarDay(date, key, tasks, today, outside) {
   const day = element("div", "calendar-day");
   day.dataset.date = key;
+  day.addEventListener("dragover", event => {
+    if (!calendarDragId) return;
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "move";
+    day.classList.add("is-over");
+  });
+  day.addEventListener("dragleave", event => {
+    if (!day.contains(event.relatedTarget)) day.classList.remove("is-over");
+  });
+  day.addEventListener("drop", event => dropCalendarTask(event, key));
   if (outside) day.classList.add("outside");
   if (key === today) day.classList.add("is-today");
   if (key === calendarDate) day.classList.add("is-selected");
@@ -137,7 +178,9 @@ function calendarDay(date, key, tasks, today, outside) {
   select.setAttribute("aria-label", `Добавить задачу на ${label}`);
   select.title = select.getAttribute("aria-label");
   if (key === today) select.setAttribute("aria-current", "date");
-  select.addEventListener("click", () => {
+  day.addEventListener("click", event => {
+    if (Date.now() - calendarDropTime <= 300) return;
+    if (event.target.closest(".calendar-task, .calendar-day-count")) return;
     calendarDate = key;
     render();
     calendarDayControl()?.focus();
