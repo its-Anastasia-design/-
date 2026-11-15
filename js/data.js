@@ -3,7 +3,7 @@
 const STORAGE_KEY = "designflow.board.v1";
 const statuses = { todo: "Запланировано", doing: "В работе", done: "Готово" };
 const priorities = { high: "Высокий", medium: "Средний", low: "Низкий" };
-const colors = { rose: "#ab6b61", sage: "#648060", clay: "#a2664f", sand: "#967957" };
+const colors = { rose: "#a16c98", sage: "#6a86ae", clay: "#b57e87", sand: "#8d7cae" };
 
 function dateKey(offset = 0) {
   const date = new Date();

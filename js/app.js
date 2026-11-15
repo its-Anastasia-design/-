@@ -142,7 +142,6 @@ function renderTask(task, today) {
 function render() {
   document.querySelectorAll("[data-view]").forEach(button => button.setAttribute("aria-pressed", String(button.dataset.view === plannerView)));
   const home = plannerView === "home";
-  document.body.classList.toggle("home-view", home);
   byId("home").hidden = !home;
   document.querySelector(".hero").hidden = home;
   renderProjects();
